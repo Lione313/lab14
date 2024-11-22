@@ -1,83 +1,178 @@
-    import HeaderComponent from "../components/Header"
-    import { useEffect } from "react";
-    import { useParams } from "react-router-dom";
-    import { NavLink } from "react-router-dom";
-    function SerieFormPage(){
+import HeaderComponent from "../components/Header";
+import { useEffect, useState } from "react";
+import { useParams, NavLink, useNavigate } from "react-router-dom";
+import axios from "axios";
 
-        const series = [
-            {cod:1, nom:"Friends", cat:"Comedy", img:"friends.png"},
-            {cod:2, nom:"Law & Order", cat:"Drama", img:"law-and-order.png"},
-            {cod:3, nom:"The Big Bang Theory", cat:"Comedy", img:"the-big-bang.png"},
-            {cod:4, nom:"Stranger Things", cat:"Horror", img:"stranger-things.png"},
-            {cod:5, nom:"Dr. House", cat:"Drama", img:"dr-house.png"},
-            {cod:6, nom:"The X-Files", cat:"Drama", img:"the-x-files.png"},
-        ];
+function SerieFormPage() {
+  const urlApi = "http://localhost:8000/series/api/v1/series/";
+  const categoriesApi = "http://localhost:8000/series/api/v1/categories/";
+  const { idserie } = useParams();
+  const navigate = useNavigate();
 
-        const {idserie} =useParams();
-        const setDataForm=(codigo) =>{
-            for (const item of series){
-                if(item.cod==codigo){
-                    console.log(item);
-                    document.getElementById("inputName").value= item.nom;
-                    document.getElementById("inputCategory").value= item.cat;
-                    document.getElementById("fileImg").src= `https://via.placeholder.com/400x250/000/fff?text=${item.img}`;
-                }
-            }
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "",
+    release_date: "",
+    rating: 0,
+  });
 
+  const [categories, setCategories] = useState([]); // Estado para almacenar las categorías
 
-
-        }
-        useEffect(()=>{
-            setDataForm((idserie));
-        },[]);
-        
-        return (
-            <>
-                <HeaderComponent />
-                <div className="container mt-3">
-                    <div className="border-bottom pb-3 mb-3">
-                        <h3>Nuevo - Serie</h3>
-                    </div>
-                    <form className="row"  >
-                        <div className="col-md-4">
-                            <img 
-                                id="fileImg"
-                                className="card-img-top" 
-                                src={"https://dummyimage.com/400x250/000/fff"} 
-                                alt="img" />
-                        </div>
-                        <div className="col-md-8">
-                            <div className="mb-3">
-                                <label htmlFor="inputName" className="form-label">Nombre</label>
-                                <input type="text" className="form-control" id="inputName" required />
-                            </div>
-                            <div className="mb-3">
-                                <label htmlFor="inputCategory" className="form-label">Categoria</label>
-                                <select className="form-select" id="inputCategory" required >
-                                    <option value="">Seleccione una opción</option>
-                                    <option value="Horror">Horror</option>
-                                    <option value="Comedy">Comedy</option>
-                                    <option value="Action">Action</option>
-                                    <option value="Drama">Drama</option>
-                                </select>
-                            </div>
-                            <div className="mb-3">
-                                <label htmlFor="inputImage" className="form-label">Imagen</label>
-                                <input type="file" className="form-control" id="inputImage" required />
-                            </div>
-                            <div className="mb-3">
-                                <button className="btn btn-primary">Guardar</button>
-                            </div>
-                            
-                        </div>
-                    </form>
-                    <div className="mb-3">
-                            <NavLink className="btn btn-light" to= "/series">Volver a la lista de Series</NavLink>   
-                        </div>
-                </div>
-            </>
-        )
+  // Cargar datos de una serie específica para edición
+  const loadSerie = async (id) => {
+    try {
+      const response = await axios.get(`${urlApi}${id}/`);
+      const serie = response.data;
+      setFormData({
+        name: serie.name,
+        category: serie.category,
+        release_date: serie.release_date,
+        rating: serie.rating,
+      });
+    } catch (error) {
+      console.error("Error cargando la serie:", error);
+      alert("Ocurrió un error al cargar los datos de la serie.");
     }
+  };
 
+  // Cargar categorías desde la API
+  const loadCategories = async () => {
+    try {
+      const response = await axios.get(categoriesApi);
+      setCategories(response.data); // Asume que la API devuelve un arreglo con las categorías [{ id, description }]
+    } catch (error) {
+      console.error("Error cargando las categorías:", error);
+      alert("Ocurrió un error al cargar las categorías.");
+    }
+  };
 
-    export default SerieFormPage
+  // Manejar envío del formulario
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (idserie) {
+        await axios.put(`${urlApi}${idserie}/`, formData);
+        alert("Serie actualizada con éxito.");
+      } else {
+        await axios.post(urlApi, formData);
+        alert("Serie creada con éxito.");
+      }
+      navigate("/series");
+    } catch (error) {
+      console.error("Error al guardar la serie:", error);
+      alert("Ocurrió un error al guardar la serie.");
+    }
+  };
+
+  // Efecto para cargar datos si `idserie` está definido y para cargar categorías
+  useEffect(() => {
+    if (idserie) {
+      loadSerie(idserie);
+    }
+    loadCategories();
+  }, [idserie]);
+
+  return (
+    <>
+      <HeaderComponent />
+      <div className="container mt-3">
+        <div className="border-bottom pb-3 mb-3">
+          <h3>{idserie ? "Editar Serie" : "Nueva Serie"}</h3>
+        </div>
+        <form className="row" onSubmit={handleSubmit}>
+          <div className="col-md-4">
+            {/* Usamos una imagen predeterminada en caso de no tener un campo de imagen */}
+            <img
+              id="fileImg"
+              className="card-img-top"
+              src="https://dummyimage.com/400x250/000/fff"
+              alt="img"
+            />
+          </div>
+          <div className="col-md-8">
+            <div className="mb-3">
+              <label htmlFor="inputName" className="form-label">
+                Nombre
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                id="inputName"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="inputCategory" className="form-label">
+                Categoría
+              </label>
+              <select
+                className="form-select"
+                id="inputCategory"
+                value={formData.category}
+                onChange={(e) =>
+                  setFormData({ ...formData, category: e.target.value })
+                }
+                required
+              >
+                <option value="">Seleccione una opción</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.description}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-3">
+              <label htmlFor="inputReleaseDate" className="form-label">
+                Fecha de lanzamiento
+              </label>
+              <input
+                type="date"
+                className="form-control"
+                id="inputReleaseDate"
+                value={formData.release_date}
+                onChange={(e) =>
+                  setFormData({ ...formData, release_date: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="inputRating" className="form-label">
+                Calificación
+              </label>
+              <input
+                type="number"
+                className="form-control"
+                id="inputRating"
+                value={formData.rating}
+                onChange={(e) =>
+                  setFormData({ ...formData, rating: e.target.value })
+                }
+                min="0"
+                max="5"
+                required
+              />
+            </div>
+            <div className="mb-3">
+              <button className="btn btn-primary" type="submit">
+                Guardar
+              </button>
+            </div>
+          </div>
+        </form>
+        <div className="mb-3">
+          <NavLink className="btn btn-light" to="/series">
+            Volver a la lista de Series
+          </NavLink>
+        </div>
+      </div>
+    </>
+  );
+}
+
+export default SerieFormPage;

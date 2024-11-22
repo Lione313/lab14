@@ -16,8 +16,10 @@ function App() {
         <Route path="inicio" element={<HomePage/>}/>
         <Route path='categorias' element={<CategoryPage/>}/>
         <Route path='series' element={<SeriePage/>}/>
+        <Route path='series/nuevo' element={<SerieFormPage/>}> </Route>
         <Route path='series/edit/:idserie' element={<SerieFormPage/>} />    
         <Route path='categorias/edit/:idcategorias' element={<CategoriaFormPage/>}/>
+        <Route path='categorias/nuevo' element={<CategoriaFormPage/>}> </Route>
        </Routes> 
     </BrowserRouter>
   )
