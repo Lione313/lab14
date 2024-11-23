@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom"
 function CategoriaComponent(props){
    const navigate=useNavigate();
    const gotoUrl=(codigo) =>{
-         navigate("/categorias/edit/"+codigo);
+         navigate("/categorias/editar/"+codigo);
    };
 
     return (

@@ -1,36 +1,34 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import HeaderComponent from "../components/Header"
-
+import { createCategoryService } from "../../services/CategoryService";  // Asegúrate de importar la función
+import HeaderComponent from "../../components/Header"
 
 const initData = {
     id: '',
     description: '',
 }
 
-
 function CategoryFormPage(){
     
-    const urlApi = 'http://localhost:8000/series/api/v1/categories/';
     const navigate = useNavigate();
     const [data, setData] = useState(initData);
 
-
     const onChangeNombre = (e) => {
-        const nData = {...data, description: e.target.value}
+        const nData = {...data, description: e.target.value};
         setData(nData);
     };
 
-
     const handleSubmit = async (e) => {
         e.preventDefault();
-        await axios.post(urlApi, data);
-        navigate("/categorias");
-
-
+        try {
+            // Utilizamos la función createCategoryService para crear la nueva categoría
+            await createCategoryService(data);
+            console.log("Categoría creada exitosamente");
+            navigate("/categorias");  // Redirige a la lista de categorías
+        } catch (error) {
+            console.error("Error al crear la categoría:", error);
+        }
     };
-
 
     return (
         <>
@@ -42,7 +40,13 @@ function CategoryFormPage(){
                 <form onSubmit={handleSubmit} className="row">
                     <div className="mb-3">
                         <label htmlFor="inputName" className="form-label">Nombre</label>
-                        <input type="text" onChange={onChangeNombre} className="form-control" required />
+                        <input 
+                            type="text" 
+                            onChange={onChangeNombre} 
+                            className="form-control" 
+                            required 
+                            value={data.description} 
+                        />
                     </div>
                     <div className="mb-3">
                         <button className="btn btn-primary">Guardar</button>
@@ -53,5 +57,4 @@ function CategoryFormPage(){
     )
 }
 
-
-export default CategoryFormPage
+export default CategoryFormPage;
